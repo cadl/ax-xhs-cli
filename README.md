@@ -68,8 +68,10 @@ ax-xhs-cli --session demo user-profile close "用户名"    # 关闭
 
 - macOS（依赖 Accessibility API 和 CoreGraphics）
 - Google Chrome
-- 运行本 CLI 的终端 app 需在 系统设置 → 隐私与安全性 中授权：
-  - **辅助功能** — 操作 UI 元素、模拟键鼠
+- 以下应用需在 系统设置 → 隐私与安全性 → 辅助功能 中授权：
+  - **终端 app**（Terminal / iTerm2 等）— 操作 UI 元素、模拟键鼠
+  - **Google Chrome** — 暴露完整的无障碍树，否则无法定位页面元素
+- 运行本 CLI 的终端 app 还需授权：
   - **屏幕录制** — 截图检测点赞/收藏状态（颜色识别）
 
 ## 安装
