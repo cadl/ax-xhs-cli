@@ -10,6 +10,7 @@ use output::OutputFormat;
 
 #[derive(Parser)]
 #[command(name = "ax-xhs-cli")]
+#[command(version = env!("CARGO_PKG_VERSION"))]
 #[command(about = "通过 axcli 自动化操作小红书（基于 macOS Accessibility API）")]
 #[command(after_help = r#"概念说明:
 
