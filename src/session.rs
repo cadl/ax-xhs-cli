@@ -136,6 +136,8 @@ pub struct SearchResult {
     pub title: String,
     pub author: String,
     pub likes: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub url: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

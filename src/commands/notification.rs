@@ -161,6 +161,7 @@ fn show_user_from_notification(
                     title: card.title.clone(),
                     author: card.author.clone(),
                     likes: card.likes.clone(),
+                    url: String::new(),
                 })
                 .collect();
 

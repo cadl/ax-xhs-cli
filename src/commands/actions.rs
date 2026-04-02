@@ -138,6 +138,7 @@ fn scroll_to_note(
                     title: card.title.clone(),
                     author: card.author.clone(),
                     likes: card.likes.clone(),
+                    url: String::new(),
                 });
             }
         }
@@ -259,7 +260,10 @@ fn open_note_modal(results: &mut Vec<SearchResult>, index: usize) -> Result<()> 
 
 pub fn show_note(results: &mut Vec<SearchResult>, index: usize, format: OutputFormat) -> Result<()> {
     open_note_modal(results, index)?;
-    extract_and_print_detail(None, format)?;
+    let url = extract_and_print_detail(None, format)?;
+    if !url.is_empty() {
+        results[index].url = url;
+    }
     axcli::press("Escape")?;
     Ok(())
 }
@@ -267,7 +271,7 @@ pub fn show_note(results: &mut Vec<SearchResult>, index: usize, format: OutputFo
 pub fn extract_and_print_detail(
     url_override: Option<&str>,
     format: OutputFormat,
-) -> Result<()> {
+) -> Result<String> {
     let mut detail = parser::NoteDetail::default();
 
     detail.url = url_override
@@ -345,7 +349,7 @@ pub fn extract_and_print_detail(
     }
 
     output::print_note_detail(&detail, format);
-    Ok(())
+    Ok(detail.url)
 }
 
 fn extract_inline_tags(content: &str) -> Vec<String> {
@@ -407,6 +411,7 @@ fn show_user(
                 title: card.title.clone(),
                 author: card.author.clone(),
                 likes: card.likes.clone(),
+                url: String::new(),
             })
             .collect();
 
@@ -520,6 +525,7 @@ fn scroll_and_collect_user_notes(
                         title: card.title.clone(),
                         author: card.author.clone(),
                         likes: card.likes.clone(),
+                        url: String::new(),
                     });
                     new_count += 1;
                 }

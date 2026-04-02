@@ -1,6 +1,6 @@
 [package]
 name = "ax-xhs-cli"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Xiaohongshu automation CLI via macOS Accessibility API"
 license = "MIT"

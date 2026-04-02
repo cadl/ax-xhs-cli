@@ -73,7 +73,7 @@ pub fn open_note(
     match action {
         None => {
             // Just show note detail
-            extract_and_print_detail(Some(url), format)?;
+            let _ = extract_and_print_detail(Some(url), format)?;
         }
         Some(OpenNoteAction::LikeNote) => {
             std::thread::sleep(std::time::Duration::from_millis(500));
@@ -272,6 +272,7 @@ pub fn open_user(
                     title: card.title.clone(),
                     author: card.author.clone(),
                     likes: card.likes.clone(),
+                    url: String::new(),
                 })
                 .collect();
 

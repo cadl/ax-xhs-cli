@@ -72,6 +72,7 @@ fn ensure_feeds_page(
             title: card.title.clone(),
             author: card.author.clone(),
             likes: card.likes.clone(),
+            url: String::new(),
         })
         .collect();
     session.page_type = session::PageType::Home;
@@ -113,6 +114,7 @@ fn scroll_and_collect_feeds(
                     title: card.title.clone(),
                     author: card.author.clone(),
                     likes: card.likes.clone(),
+                    url: String::new(),
                 });
                 new_count += 1;
             }

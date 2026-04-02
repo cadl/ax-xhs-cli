@@ -153,6 +153,7 @@ fn do_search(
             title: card.title.clone(),
             author: card.author.clone(),
             likes: card.likes.clone(),
+            url: String::new(),
         })
         .collect();
     session.page_type = session::PageType::Search;
@@ -189,6 +190,7 @@ fn scroll_and_collect_with_existing(
                     title: card.title.clone(),
                     author: card.author.clone(),
                     likes: card.likes.clone(),
+                    url: String::new(),
                 });
                 new_count += 1;
             }
