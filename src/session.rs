@@ -11,6 +11,7 @@ use crate::axcli;
 pub enum PageType {
     Home,
     Search,
+    SearchUser,
     UserProfile,
     NoteDetail,
     Notification,
@@ -24,6 +25,7 @@ impl std::fmt::Display for PageType {
         match self {
             PageType::Home => write!(f, "首页"),
             PageType::Search => write!(f, "搜索结果"),
+            PageType::SearchUser => write!(f, "用户搜索结果"),
             PageType::UserProfile => write!(f, "用户主页"),
             PageType::NoteDetail => write!(f, "笔记详情"),
             PageType::Notification => write!(f, "通知"),
@@ -56,6 +58,11 @@ impl PageType {
             command: "feeds",
             description: "查看首页推荐（会导航到首页）",
             example: "feeds",
+        });
+        actions.push(AvailableAction {
+            command: "search-user",
+            description: "搜索用户",
+            example: "search-user -k \"关键词\"",
         });
         actions.push(AvailableAction {
             command: "notification",
@@ -122,6 +129,8 @@ impl PageType {
             (PageType::Home, true) => "提示: 可通过索引操作结果，如 feeds show-note 0 / show-user 0",
             (PageType::Search, false) => "提示: 搜索无结果，尝试其他关键词",
             (PageType::Search, true) => "提示: 可通过索引操作搜索结果，如 search show-note 0 / show-user 0",
+            (PageType::SearchUser, false) => "提示: 未搜索到用户，尝试其他关键词",
+            (PageType::SearchUser, true) => "提示: 可通过索引查看用户主页，如 search-user show-user 0",
             (PageType::Notification, _) => "提示: 当前在通知页，使用 feeds 回首页",
             (PageType::Error, _) => "提示: 页面异常，使用 search 或 feeds 重新导航",
             (PageType::NotLoggedIn, _) => "提示: 请先在浏览器中登录小红书",
@@ -138,6 +147,16 @@ pub struct SearchResult {
     pub likes: String,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub url: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserSearchResult {
+    pub index: usize,
+    pub name: String,
+    pub xhs_id: String,
+    pub description: String,
+    pub followers: String,
+    pub notes_count: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -160,6 +179,9 @@ pub struct Session {
     #[serde(default)]
     pub scene_params: std::collections::HashMap<String, String>,
     pub results: Vec<SearchResult>,
+    /// User search results (from search-user command)
+    #[serde(default)]
+    pub user_results: Vec<UserSearchResult>,
     /// Open user profile tabs
     #[serde(default)]
     pub child_tabs: Vec<ChildTab>,
@@ -178,6 +200,7 @@ impl Session {
             tab_id: None,
             scene_params: std::collections::HashMap::new(),
             results: vec![],
+            user_results: vec![],
             child_tabs: vec![],
             child_tab_ids: vec![],
         }

@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use crate::parser::{Comment, NoteDetail, NotificationItem, UserProfile};
-use crate::session::SearchResult;
+use crate::session::{SearchResult, UserSearchResult};
 
 #[derive(Debug, Clone, Copy, Default, clap::ValueEnum)]
 pub enum OutputFormat {
@@ -176,6 +176,44 @@ pub fn print_notifications(items: &[NotificationItem], format: OutputFormat) {
                     }
                 }
                 println!("\n共 {} 条通知", items.len());
+            }
+        }
+        _ => print_value(&items, format),
+    }
+}
+
+/// Print user search results
+pub fn print_user_search_list(
+    items: &[UserSearchResult],
+    format: OutputFormat,
+    session_id: &str,
+) {
+    match format {
+        OutputFormat::Text => {
+            if items.is_empty() {
+                println!("没有搜索到用户");
+            } else {
+                for r in items {
+                    let mut info = format!("[{}] {}", r.index, r.name);
+                    if !r.xhs_id.is_empty() {
+                        info.push_str(&format!(" (小红书号: {})", r.xhs_id));
+                    }
+                    if !r.followers.is_empty() {
+                        info.push_str(&format!(" - 粉丝:{}", r.followers));
+                    }
+                    if !r.notes_count.is_empty() {
+                        info.push_str(&format!(" 笔记:{}", r.notes_count));
+                    }
+                    println!("{}", info);
+                    if !r.description.is_empty() {
+                        println!("    {}", r.description);
+                    }
+                }
+                println!(
+                    "\n共 {} 位用户 (session: {})",
+                    items.len(),
+                    session_id
+                );
             }
         }
         _ => print_value(&items, format),

@@ -46,6 +46,159 @@ pub fn extract_note_cards(container: &AXNode) -> Vec<NoteCard> {
     cards
 }
 
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct UserCard {
+    pub name: String,
+    pub xhs_id: String,
+    pub description: String,
+    pub followers: String,
+    pub notes_count: String,
+}
+
+/// Extract user cards from the search results page.
+///
+/// User cards in XHS search are `.user-info` elements within `.layout`.
+/// Each contains a combined text like:
+/// "编程猫16小时前更新小红书号：94745206473线上教育粉丝・37.7万笔记・507"
+///
+/// Structure:
+/// ```text
+/// .layout
+///   group
+///     link
+///       .avatar-container
+///       .user-info  "名字...小红书号：xxx...粉丝・N笔记・N"
+///         statictext (multiple)
+///       .btn
+/// ```
+pub fn extract_user_cards(container: &AXNode) -> Vec<UserCard> {
+    let card_nodes = container.locate_all(".user-info");
+    let mut cards = Vec::new();
+
+    for card in &card_nodes {
+        let full_text = card.text(8);
+        if let Some(parsed) = parse_user_info_text(&full_text) {
+            cards.push(parsed);
+        }
+    }
+
+    cards
+}
+
+/// Parse a user-info combined text into a UserCard.
+///
+/// Input examples:
+///   "编程猫16小时前更新小红书号：94745206473线上教育粉丝・37.7万笔记・507"
+///   "波哥聊编程小红书号：bglbc666粉丝・5.5万笔记・213"
+pub fn parse_user_info_text(text: &str) -> Option<UserCard> {
+    let text = text.trim();
+    if text.is_empty() {
+        return None;
+    }
+
+    // Split by "小红书号：" or "小红书号:"
+    let (before_id, after_id) = if let Some(pos) = text.find("小红书号：") {
+        (&text[..pos], &text[pos + "小红书号：".len()..])
+    } else if let Some(pos) = text.find("小红书号:") {
+        (&text[..pos], &text[pos + "小红书号:".len()..])
+    } else {
+        return None;
+    };
+
+    // Extract name from before_id: strip trailing update time like "16小时前更新", "5天前更新"
+    let name = strip_update_time(before_id);
+    if name.is_empty() {
+        return None;
+    }
+
+    // Split after_id by "粉丝" to get xhs_id and the rest
+    let (xhs_id, after_followers_label) = if let Some(pos) = after_id.find("粉丝") {
+        (after_id[..pos].trim().to_string(), &after_id[pos + "粉丝".len()..])
+    } else {
+        (after_id.trim().to_string(), "")
+    };
+
+    // Extract followers count (after "・" or ":" up to "笔记")
+    let (followers, after_notes_label) = if let Some(pos) = after_followers_label.find("笔记") {
+        let f = after_followers_label[..pos].trim_start_matches('・').trim().to_string();
+        (f, &after_followers_label[pos + "笔记".len()..])
+    } else {
+        let f = after_followers_label.trim_start_matches('・').trim().to_string();
+        (f, "")
+    };
+
+    // Notes count (after "・")
+    let notes_count = after_notes_label.trim_start_matches('・').trim().to_string();
+
+    // Description: any text between xhs_id and "粉丝" that isn't purely the ID
+    // The xhs_id field may contain trailing description text
+    // e.g., "94745206473线上教育" → id="94745206473", desc="线上教育"
+    let (clean_id, description) = split_id_and_desc(&xhs_id);
+
+    Some(UserCard {
+        name,
+        xhs_id: clean_id,
+        description,
+        followers,
+        notes_count,
+    })
+}
+
+/// Strip trailing update time patterns like "16小时前更新", "5天前更新", "3分钟前更新"
+fn strip_update_time(s: &str) -> String {
+    // Pattern: digits + (分钟|小时|天) + "前更新"
+    if let Some(pos) = s.find("前更新") {
+        let before = &s[..pos];
+        for unit in &["分钟", "小时", "天"] {
+            if let Some(unit_pos) = before.rfind(unit) {
+                let prefix = &before[..unit_pos];
+                if prefix.ends_with(|c: char| c.is_ascii_digit()) {
+                    // Walk char_indices to find where trailing digits start
+                    let chars: Vec<(usize, char)> = prefix.char_indices().collect();
+                    let mut name_end_byte = 0;
+                    for i in (0..chars.len()).rev() {
+                        if !chars[i].1.is_ascii_digit() {
+                            name_end_byte = chars[i].0 + chars[i].1.len_utf8();
+                            break;
+                        }
+                    }
+                    return s[..name_end_byte].trim().to_string();
+                }
+            }
+        }
+    }
+    s.trim().to_string()
+}
+
+/// Split a combined xhs_id + description string.
+/// The ID is numeric or alphanumeric, description follows.
+/// e.g., "94745206473线上教育" → ("94745206473", "线上教育")
+/// e.g., "codinghou" → ("codinghou", "")
+fn split_id_and_desc(s: &str) -> (String, String) {
+    // If it's all ASCII alphanumeric, it's just the ID
+    if s.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        return (s.to_string(), String::new());
+    }
+
+    // Find where non-ID characters start (first CJK or non-alnum char after initial ID)
+    let mut id_end = 0;
+    for (i, c) in s.char_indices() {
+        if c.is_ascii_alphanumeric() || c == '_' {
+            id_end = i + c.len_utf8();
+        } else {
+            break;
+        }
+    }
+
+    if id_end == 0 {
+        return (String::new(), s.to_string());
+    }
+
+    let id = s[..id_end].to_string();
+    let desc = s[id_end..].trim().to_string();
+    (id, desc)
+}
+
 #[derive(Debug, Clone, Default, serde::Serialize)]
 pub struct UserProfile {
     pub nickname: String,

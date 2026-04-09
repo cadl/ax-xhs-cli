@@ -17,6 +17,7 @@ src/
 └── commands/
     ├── actions.rs     # 共享 NoteAction 子命令 + dispatch（show-note/like-note/...）
     ├── search.rs      # 搜索场景 + 分页滚动采集（scroll_and_collect）
+    ├── search_user.rs # 搜索用户场景 + show-user 子命令
     ├── feeds.rs       # 首页推荐场景 + 分页滚动
     ├── user_profile.rs # 用户主页场景（子 tab 管理 + list/close）
     ├── notification.rs # 通知场景（评论和@、赞和收藏、新增关注）
@@ -31,7 +32,8 @@ src/
 命令按**场景**组织，每个场景有可选的**子命令**：
 
 ```
-search -k <keyword> [--scene-sort ...] [子命令]    # 搜索场景
+search -k <keyword> [--scene-sort ...] [子命令]    # 搜索笔记场景
+search-user -k <keyword> [--size N] [子命令]       # 搜索用户场景
 feeds [子命令]                                      # 首页推荐场景
 user-profile --scene-name <用户> [子命令]           # 用户主页场景
 notification --scene-tab <tab> [子命令]              # 通知场景
@@ -40,6 +42,8 @@ open-user <URL>                                      # URL 用户场景
 ```
 
 共享子命令（NoteAction）：show-note, show-user, like-note, unlike-note, favorite-note, unfavorite-note, comment-note, show-comments
+
+search-user 子命令（SearchUserAction）：show-user
 
 ## 场景参数 (--scene-xxx)
 
@@ -67,10 +71,11 @@ open-user <URL>                                      # URL 用户场景
 
 ## 状态机
 
-三个稳定状态：**首页**、**搜索结果页**、**通知页**。note/user/like 等是临时操作（弹窗/子tab）。
+四个稳定状态：**首页**、**搜索结果页**、**用户搜索结果页**、**通知页**。note/user/like 等是临时操作（弹窗/子tab）。
 
 - 首页 → `search` → 搜索结果
 - 搜索结果 → `search`（换关键词）→ 首页（点 logo）→ 搜索结果
+- 任意 → `search-user` → 用户搜索结果（先搜索再点"用户"tab）
 - 任意 → `feeds` → 首页（点 logo）
 - 任意 → `notification` → 通知页（点侧栏"通知"）
 - 通知页 → `feeds` → 首页（点 logo）
@@ -101,6 +106,8 @@ $CLI --session test search show-user 0 --size 3
 $CLI --session test user-profile list
 $CLI --session test user-profile --scene-name "用户名" show-note 0
 $CLI --session test user-profile close "用户名"
+$CLI --session test search-user -k "编程" --size 5
+$CLI --session test search-user show-user 0
 $CLI --session test feeds --size 5
 $CLI --session test feeds show-note 0
 $CLI --session test notification --scene-tab "赞和收藏"

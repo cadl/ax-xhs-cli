@@ -20,7 +20,7 @@ use output::OutputFormat;
     创建: session start <name>  结束: session end <name>
 
   场景 (Scene):
-    命令按页面场景组织: search、feeds、user-profile、notification、open-note、open-user。
+    命令按页面场景组织: search、search-user、feeds、user-profile、notification、open-note、open-user。
     每个场景有自己的子命令（如 show-note、like-note 等）。
     不带子命令时进入/刷新场景；带子命令时在当前场景下操作。
 
@@ -45,6 +45,8 @@ use output::OutputFormat;
   ax-xhs-cli --session demo search --scene-keyword "编程" --scene-sort "最新"
   ax-xhs-cli --session demo search show-note 0
   ax-xhs-cli --session demo search show-user 0
+  ax-xhs-cli --session demo search-user -k "关键词"
+  ax-xhs-cli --session demo search-user show-user 0
   ax-xhs-cli --session demo user-profile --scene-name "用户名" show-note 0
   ax-xhs-cli --session demo feeds show-note 0
   ax-xhs-cli --session demo notification --scene-tab "赞和收藏"
@@ -134,6 +136,20 @@ enum Commands {
         action: Option<commands::notification::NotificationAction>,
     },
 
+    /// 搜索用户
+    #[command(name = "search-user")]
+    SearchUser {
+        /// [场景参数] 搜索关键词
+        #[arg(long = "scene-keyword", short = 'k')]
+        keyword: Option<String>,
+        /// 返回结果数量
+        #[arg(long, default_value = "20")]
+        size: usize,
+        /// 操作子命令
+        #[command(subcommand)]
+        action: Option<commands::search_user::SearchUserAction>,
+    },
+
     // --- URL 直接访问场景 ---
     /// 通过 URL 打开笔记（需要完整 URL，包含 xsec_token 参数）
     #[command(name = "open-note", after_help = "URL 必须包含 xsec_token 参数，否则页面无法加载。\n可从 search/feeds show-note 输出的 url 字段获取完整链接。")]
@@ -221,6 +237,17 @@ fn main() {
             time.as_deref(),
             scope.as_deref(),
             location.as_deref(),
+            size,
+            action,
+            format,
+        ),
+        Commands::SearchUser {
+            keyword,
+            size,
+            action,
+        } => commands::search_user::search_user(
+            session_id,
+            keyword.as_deref(),
             size,
             action,
             format,

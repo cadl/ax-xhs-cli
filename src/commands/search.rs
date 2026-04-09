@@ -96,16 +96,9 @@ pub fn search(
     result
 }
 
-fn do_search(
-    session: &mut session::Session,
-    keyword: &str,
-    sort: Option<&str>,
-    note_type: Option<&str>,
-    time: Option<&str>,
-    scope: Option<&str>,
-    location: Option<&str>,
-    size: usize,
-) -> Result<()> {
+/// Navigate to search results page: go to homepage, type keyword, press Enter.
+/// Shared between search (notes) and search-user commands.
+pub fn navigate_to_search(session: &mut session::Session, keyword: &str) -> Result<()> {
     // Go to homepage first
     if session.page_type != session::PageType::Home {
         axcli::human_click("link#link-guide")?;
@@ -123,6 +116,20 @@ fn do_search(
     std::thread::sleep(std::time::Duration::from_millis(300));
     axcli::press("Enter")?;
     std::thread::sleep(std::time::Duration::from_secs(3));
+    Ok(())
+}
+
+fn do_search(
+    session: &mut session::Session,
+    keyword: &str,
+    sort: Option<&str>,
+    note_type: Option<&str>,
+    time: Option<&str>,
+    scope: Option<&str>,
+    location: Option<&str>,
+    size: usize,
+) -> Result<()> {
+    navigate_to_search(session, keyword)?;
 
     let has_filters = sort.is_some()
         || note_type.is_some()

@@ -5,5 +5,6 @@ pub mod login;
 pub mod notification;
 pub mod open;
 pub mod search;
+pub mod search_user;
 pub mod session_cmd;
 pub mod user_profile;
