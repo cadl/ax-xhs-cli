@@ -12,7 +12,7 @@
 请读取 tests/cases/README.md 了解执行规则，然后依次执行 tests/cases/ 目录下的冒烟测试
 ```
 
-测试用例为自然语言描述（非代码），覆盖 11 个场景：session 生命周期、搜索与筛选、笔记详情与评论、用户主页与子 tab、首页推荐、点赞/收藏、分页滚动、错误处理、通知、场景参数一致性等。
+测试用例为自然语言描述（非代码），覆盖 12 个场景：session 生命周期、搜索与筛选、搜索用户、笔记详情与评论、用户主页与子 tab、首页推荐、点赞/收藏、分页滚动、错误处理、通知、场景参数一致性等。
 
 https://github.com/user-attachments/assets/8d179db0-264b-4910-a05c-ed31aaa96e96
 
@@ -39,6 +39,7 @@ ax-xhs-cli session end "demo"       # 结束 session
 | 场景 | 说明 | 场景参数 | show-note | show-user | like | unlike | favorite | unfavorite | comment | show-comments | list | close |
 |------|------|----------|:---------:|:---------:|:----:|:------:|:--------:|:----------:|:-------:|:-------------:|:----:|:-----:|
 | `search` | 搜索笔记 | `--scene-keyword` (`-k`), `--scene-sort`, `--scene-note-type`, `--scene-time`, `--scene-scope`, `--scene-location` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| `search-user` | 搜索用户 | `--scene-keyword` (`-k`) | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | `feeds` | 首页推荐 | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `user-profile` | 用户主页 | `--scene-name` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `notification` | 通知 | `--scene-tab` (评论和@, 赞和收藏, 新增关注) | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -47,7 +48,7 @@ ax-xhs-cli session end "demo"       # 结束 session
 
 ### 子 Tab
 
-`show-user`（search/feeds/notification）和 `open-user` 会打开用户页子 tab，保留至 session end：
+`show-user`（search/search-user/feeds/notification）和 `open-user` 会打开用户页子 tab，保留至 session end：
 
 ```bash
 ax-xhs-cli --session demo search show-user 0           # 打开用户页
@@ -100,6 +101,10 @@ ax-xhs-cli --session demo search show-note 0 -f json
 ax-xhs-cli --session demo search show-user 0 --size 5
 ax-xhs-cli --session demo search like-note 0
 ax-xhs-cli --session demo search show-comments 0 --size 5
+
+# 搜索用户场景
+ax-xhs-cli --session demo search-user -k "编程" --size 5
+ax-xhs-cli --session demo search-user show-user 0
 
 # 首页推荐场景
 ax-xhs-cli --session demo feeds --size 10
@@ -155,6 +160,16 @@ search [--scene-keyword <K>] [--scene-sort <S>] [--scene-note-type <T>]
 
 场景参数：`--scene-keyword`（`-k`）, `--scene-sort`, `--scene-note-type`, `--scene-time`, `--scene-scope`, `--scene-location`
 
+### `search-user` — 搜索用户
+
+```
+search-user [--scene-keyword <K>] [--size N] [SUBCOMMAND]
+```
+
+场景参数：`--scene-keyword`（`-k`）
+
+子命令：`show-user <INDEX>` — 打开用户主页（子 tab）
+
 ### `feeds` — 首页推荐
 
 ```
@@ -200,7 +215,7 @@ open-user <URL> [--size N]
 
 ### 通用子命令
 
-search、feeds、user-profile 共享以下子命令：
+search、feeds、user-profile 共享以下子命令（search-user 仅支持 show-user）：
 
 | 子命令 | 说明 |
 |--------|------|
@@ -235,7 +250,8 @@ src/
 ├── parser.rs          # AXNode 树提取（笔记卡片、用户资料、评论、通知）
 └── commands/
     ├── actions.rs     # 共享 NoteAction 子命令（show-note/like-note/...）
-    ├── search.rs      # 搜索场景 + 分页滚动
+    ├── search.rs      # 搜索笔记场景 + 分页滚动
+    ├── search_user.rs # 搜索用户场景
     ├── feeds.rs       # 首页推荐场景
     ├── user_profile.rs # 用户主页场景（子 tab 管理）
     ├── notification.rs # 通知场景
