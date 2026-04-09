@@ -208,6 +208,9 @@ pub fn print_user_search_list(
                     if !r.description.is_empty() {
                         println!("    {}", r.description);
                     }
+                    if !r.url.is_empty() {
+                        println!("    链接: {}", r.url);
+                    }
                 }
                 println!(
                     "\n共 {} 位用户 (session: {})",

@@ -53,6 +53,19 @@ pub struct UserCard {
     pub description: String,
     pub followers: String,
     pub notes_count: String,
+    pub url: String,
+}
+
+/// Extract URL from an AXLink node's AXURL attribute.
+fn link_url(node: &AXNode) -> String {
+    use axcli_lib::accessibility::attr_value;
+    use objc2_core_foundation::CFURL;
+
+    let Some(value) = attr_value(&node.0, "AXURL") else {
+        return String::new();
+    };
+    let url = unsafe { &*(value.as_ref() as *const objc2_core_foundation::CFType as *const CFURL) };
+    url.string().to_string()
 }
 
 /// Extract user cards from the search results page.
@@ -77,7 +90,13 @@ pub fn extract_user_cards(container: &AXNode) -> Vec<UserCard> {
 
     for card in &card_nodes {
         let full_text = card.text(8);
-        if let Some(parsed) = parse_user_info_text(&full_text) {
+        if let Some(mut parsed) = parse_user_info_text(&full_text) {
+            // Extract URL from parent link element's AXURL attribute
+            if let Some(parent) = card.parent() {
+                if parent.role().as_deref() == Some("AXLink") {
+                    parsed.url = link_url(&parent);
+                }
+            }
             cards.push(parsed);
         }
     }
@@ -141,6 +160,7 @@ pub fn parse_user_info_text(text: &str) -> Option<UserCard> {
         description,
         followers,
         notes_count,
+        url: String::new(),
     })
 }
 

@@ -157,6 +157,8 @@ pub struct UserSearchResult {
     pub description: String,
     pub followers: String,
     pub notes_count: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub url: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -112,6 +112,7 @@ fn do_search_user(
             description: card.description.clone(),
             followers: card.followers.clone(),
             notes_count: card.notes_count.clone(),
+            url: card.url.clone(),
         })
         .collect();
     session.page_type = session::PageType::SearchUser;
@@ -189,6 +190,7 @@ fn scroll_and_collect_users_with_existing(
                     description: card.description.clone(),
                     followers: card.followers.clone(),
                     notes_count: card.notes_count.clone(),
+                    url: card.url.clone(),
                 });
                 new_count += 1;
             }
